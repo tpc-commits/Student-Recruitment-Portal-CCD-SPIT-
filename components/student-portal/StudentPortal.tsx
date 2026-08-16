@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import { type ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { portalApiBaseUrl } from "../../services/portal-api";
+import type { AddressDetails, JobProfile, StudentUser } from "../../types/portal";
 
 type ModuleId =
   | "home"
@@ -12,6 +14,7 @@ type ModuleId =
   | "events"
   | "competitions"
   | "resume"
+  | "calendar"
   | "help";
 
 type ProfileSectionId =
@@ -23,21 +26,6 @@ type ProfileSectionId =
   | "accomplishments";
 
 type JobDetailTab = "description" | "workflow" | "eligibility";
-
-interface JobProfile {
-  id: string;
-  title: string;
-  company: string;
-  city: string;
-  sector: string;
-  positionType: string;
-  posted: string;
-  closes: string;
-  ctc: string;
-  category: string;
-  description: string;
-  requirements: string[];
-}
 
 interface ActivityItem {
   title: string;
@@ -56,7 +44,15 @@ interface UploadedResume {
   uploadedAt: string;
 }
 
-const resumeApiBaseUrl = process.env.NEXT_PUBLIC_RESUME_API_URL ?? "http://localhost:3002";
+interface TimelineEvent {
+  id: string;
+  day: number;
+  month: string;
+  title: string;
+  meta: string;
+  status: string;
+  statusTone: "blue" | "green" | "amber" | "gray";
+}
 
 const navigationItems: Array<{ id: ModuleId; label: string; icon: string }> = [
   { id: "home", label: "Home", icon: "⌂" },
@@ -78,6 +74,7 @@ const moduleTitles: Record<ModuleId, string> = {
   events: "Events",
   competitions: "Competitions",
   resume: "Resume",
+  calendar: "Recruitment Calendar",
   help: "Help Centre",
 };
 
@@ -88,84 +85,6 @@ const profileSections: Array<{ id: ProfileSectionId; label: string }> = [
   { id: "skills", label: "Skills, Subjects & Languages" },
   { id: "projects", label: "Projects" },
   { id: "accomplishments", label: "Accomplishments" },
-];
-
-const jobProfiles: JobProfile[] = [
-  {
-    id: "edralabs",
-    title: "Engineer Intern",
-    company: "Edra Labs",
-    city: "Mumbai",
-    sector: "Technology",
-    positionType: "Internship",
-    posted: "2 days ago",
-    closes: "Closes in 3 days",
-    ctc: "₹75,000 per month",
-    category: "Elite",
-    description:
-      "Join a product engineering team building dependable tools for high-growth businesses. Interns work alongside senior engineers on production features, testing, and platform improvements.",
-    requirements: ["CGPA 7.5 or above", "No active backlogs", "Computer, IT or EXTC branches"],
-  },
-  {
-    id: "bnp",
-    title: "Technology Hackathon",
-    company: "BNP Paribas India",
-    city: "Bengaluru · Chennai",
-    sector: "Banking",
-    positionType: "Full-time",
-    posted: "2 days ago",
-    closes: "Closes in 2 days",
-    ctc: "₹14.5 LPA",
-    category: "Dream",
-    description:
-      "A campus technology challenge that leads to software engineering interviews across digital banking, risk platforms, and data engineering teams.",
-    requirements: ["CGPA 7.0 or above", "2026 graduating batch", "All engineering branches"],
-  },
-  {
-    id: "blackrock",
-    title: "Software Engineer / Aladdin Data",
-    company: "BlackRock",
-    city: "Gurugram · Mumbai",
-    sector: "Fintech",
-    positionType: "Full-time",
-    posted: "3 days ago",
-    closes: "Closes in 5 days",
-    ctc: "₹22 LPA",
-    category: "Super Dream",
-    description:
-      "Build and operate data products used by investment teams. The role combines software engineering, cloud platforms, data quality, and financial technology.",
-    requirements: ["CGPA 8.0 or above", "Strong DSA fundamentals", "Computer and IT branches"],
-  },
-  {
-    id: "versor",
-    title: "Quantitative Developer",
-    company: "Versor Investments",
-    city: "Mumbai",
-    sector: "Finance",
-    positionType: "Full-time",
-    posted: "4 days ago",
-    closes: "Closes in 6 days",
-    ctc: "₹19 LPA",
-    category: "Dream",
-    description:
-      "Develop research infrastructure and data pipelines for systematic investing. Ideal for students who enjoy mathematics, algorithms, and high-quality software.",
-    requirements: ["CGPA 8.0 or above", "Python or C++ proficiency", "All engineering branches"],
-  },
-  {
-    id: "futures-first",
-    title: "International Markets Intern",
-    company: "Futures First",
-    city: "Gurugram · Kolkata",
-    sector: "Finance",
-    positionType: "Internship",
-    posted: "7 days ago",
-    closes: "Closes tomorrow",
-    ctc: "₹55,000 per month",
-    category: "Elite",
-    description:
-      "Learn market analysis, risk management, and decision-making in a structured internship for analytically strong students.",
-    requirements: ["CGPA 7.0 or above", "Strong analytical ability", "Open to all branches"],
-  },
 ];
 
 const activityPages: Record<"interviews" | "assessments" | "events" | "competitions", {
@@ -440,18 +359,23 @@ function VerifiedBadge({ small = false }: { small?: boolean }) {
   );
 }
 
-function ProfileIdentity() {
+function studentInitials(fullName: string) {
+  return fullName.split(/\s+/).filter(Boolean).slice(0, 2).map((name) => name[0]).join("").toUpperCase();
+}
+
+function ProfileIdentity({ student }: { student: StudentUser }) {
+  const profilePhotoUrl = student.profile?.profilePhoto ? `${portalApiBaseUrl}/api/profile/photo` : null;
   return (
     <section className="student-card" aria-labelledby="student-name">
       <div className="avatar-wrap">
-        <div className="student-avatar" aria-hidden="true">AM</div>
+        <div className={profilePhotoUrl ? "student-avatar profile-photo" : "student-avatar"} style={profilePhotoUrl ? { backgroundImage: `url(${profilePhotoUrl})` } : undefined} aria-hidden="true">{profilePhotoUrl ? "" : studentInitials(student.fullName)}</div>
         <span className="online-indicator" title="Profile active" />
       </div>
       <div className="student-title-row">
-        <h1 id="student-name">Aarav Rajesh<br />Mehta</h1>
+        <h1 id="student-name">{student.fullName}</h1>
         <VerifiedBadge />
       </div>
-      <p>Student ID: <strong>SRP-24-0187</strong></p>
+      <p>Class of <strong>{student.graduationYear}</strong></p>
       <div className="completion-row">
         <span>Profile strength</span>
         <strong>82%</strong>
@@ -462,12 +386,32 @@ function ProfileIdentity() {
   );
 }
 
-function HomeDashboard({ openModule }: { openModule: (moduleId: ModuleId) => void }) {
-  const quickStats = [
-    { label: "Applications", value: "8", note: "3 active processes", icon: "↗" },
-    { label: "Upcoming rounds", value: "2", note: "Next on 12 Aug", icon: "◷" },
-    { label: "Profile strength", value: "82%", note: "Add one project", icon: "◎" },
-    { label: "Saved jobs", value: "5", note: "2 closing soon", icon: "☆" },
+function buildRecruitmentTimeline(jobProfiles: JobProfile[]): TimelineEvent[] {
+  const jobEvents = jobProfiles.slice(0, 4).map((job, index) => ({
+    id: `job-${job.id}`,
+    day: 12 + index * 3,
+    month: "Aug",
+    title: `${job.title} · ${job.company}`,
+    meta: `${job.positionType} · ${job.city}`,
+    status: "Application deadline",
+    statusTone: index === 0 ? "blue" as const : "gray" as const,
+  }));
+
+  return [
+    ...jobEvents,
+    { id: "resume-clinic", day: 13, month: "Aug", title: "Resume Clinic · CCD", meta: "1:00 PM · Seminar Hall 2", status: "Registered", statusTone: "amber" },
+    { id: "aptitude-assessment", day: 17, month: "Aug", title: "Campus Aptitude Assessment", meta: "10:30 AM · Computer Centre", status: "Assessment", statusTone: "green" },
+    { id: "interview-briefing", day: 20, month: "Aug", title: "Interview Readiness Briefing", meta: "4:00 PM · Online", status: "Event", statusTone: "blue" },
+  ].sort((first, second) => first.day - second.day) as TimelineEvent[];
+}
+
+function HomeDashboard({ openModule, student, jobProfiles }: { openModule: (moduleId: ModuleId) => void; student: StudentUser; jobProfiles: JobProfile[] }) {
+  const firstName = student.fullName.split(/\s+/)[0];
+  const timelineEvents = buildRecruitmentTimeline(jobProfiles);
+  const notifications = [
+    { id: "placement-cycle", initials: "CCD", author: "CCD Placement Office", time: "Today · 10:30 AM", title: `Campus Placement ${student.graduationYear} is open for registrations`, body: `The placement cycle for the class of ${student.graduationYear} is now active. Eligible students can review published roles and participate in company processes from this portal.`, category: "Placement cycle", action: "View job profiles", module: "jobs" as ModuleId },
+    { id: "resume-clinic", initials: "RM", author: "Riya Mehta · CCD", time: "Yesterday · 4:15 PM", title: "Resume clinic registrations close this week", body: "Bring your latest resume for a focused review covering structure, role alignment, project descriptions, and placement-ready formatting.", category: "Student support", action: "Open resume centre", module: "resume" as ModuleId },
+    { id: "assessment-guidance", initials: "AG", author: "Assessment Group", time: "8 August · 2:00 PM", title: "Campus aptitude assessment instructions published", body: "Reporting time, permitted materials, system requirements, and test-day guidance are now available for the upcoming common assessment.", category: "Assessment", action: "View assessments", module: "assessments" as ModuleId },
   ];
 
   return (
@@ -475,8 +419,8 @@ function HomeDashboard({ openModule }: { openModule: (moduleId: ModuleId) => voi
       <section className="welcome-card">
         <div>
           <span className="eyebrow light">Sunday, 9 August</span>
-          <h1>Good afternoon, Aarav.</h1>
-          <p>Your placement profile is verified and you have two recruitment actions due this week.</p>
+          <h1>Good afternoon, {firstName}.</h1>
+          <p>Your class of {student.graduationYear} placement profile is verified and ready for eligible opportunities.</p>
           <div className="welcome-actions">
             <button className="white-button" onClick={() => openModule("jobs")}>Explore jobs</button>
             <button className="ghost-light-button" onClick={() => openModule("profile")}>Complete profile</button>
@@ -488,61 +432,73 @@ function HomeDashboard({ openModule }: { openModule: (moduleId: ModuleId) => voi
         </div>
       </section>
 
-      <section className="stat-card-grid" aria-label="Placement summary">
-        {quickStats.map((stat) => (
-          <article className="metric-card" key={stat.label}>
-            <span className="metric-icon" aria-hidden="true">{stat.icon}</span>
-            <p>{stat.label}</p>
-            <strong>{stat.value}</strong>
-            <small>{stat.note}</small>
-          </article>
-        ))}
-      </section>
-
       <div className="dashboard-columns">
-        <section className="dashboard-card">
-          <div className="dashboard-card-header">
-            <div><span className="section-kicker">Next up</span><h2>Your recruitment timeline</h2></div>
-            <button className="text-button" onClick={() => openModule("interviews")}>View all</button>
-          </div>
-          <div className="timeline-list">
-            <article className="timeline-item featured">
-              <div className="timeline-date"><strong>12</strong><span>Aug</span></div>
-              <div><h3>Technical Interview · Edra Labs</h3><p>11:30 AM · Online · 45 minutes</p></div>
-              <span className="status-pill blue">Upcoming</span>
-            </article>
-            <article className="timeline-item">
-              <div className="timeline-date"><strong>13</strong><span>Aug</span></div>
-              <div><h3>Resume Clinic · CCD</h3><p>1:00 PM · Seminar Hall 2</p></div>
-              <span className="status-pill amber">Registered</span>
-            </article>
-            <article className="timeline-item">
-              <div className="timeline-date"><strong>15</strong><span>Aug</span></div>
-              <div><h3>HR Discussion · BlackRock</h3><p>2:00 PM · Placement Cell</p></div>
-              <span className="status-pill gray">Scheduled</span>
-            </article>
+        <section className="notifications-feed" aria-labelledby="notifications-title">
+          <div className="notifications-heading"><div><span className="section-kicker">Latest updates</span><h2 id="notifications-title">Notifications</h2><p>Announcements and guidance published for your placement batch.</p></div><span className="notification-count">{notifications.length} new</span></div>
+          <div className="notification-posts">
+            {notifications.map((notification) => (
+              <article className="notification-post" key={notification.id}>
+                <header><span className="notification-author-avatar">{notification.initials}</span><div><strong>{notification.author}</strong><small>{notification.time}</small></div></header>
+                <div className="notification-post-body"><h3>{notification.title}</h3><p>{notification.body}</p></div>
+                <footer><span>{notification.category}</span><button type="button" onClick={() => openModule(notification.module)}>{notification.action} →</button></footer>
+              </article>
+            ))}
           </div>
         </section>
 
-        <aside className="dashboard-card recommended-card">
-          <div className="dashboard-card-header">
-            <div><span className="section-kicker">Matched for you</span><h2>Recommended jobs</h2></div>
+        <aside className="dashboard-card timeline-card" aria-labelledby="timeline-title">
+          <div className="dashboard-card-header timeline-card-header">
+            <div><span className="section-kicker">Next up</span><h2 id="timeline-title">Your recruitment timeline</h2></div>
+            <div className="timeline-header-actions"><button className="text-button" onClick={() => openModule("interviews")}>View all</button><button className="timeline-calendar-button" onClick={() => openModule("calendar")}><span aria-hidden="true">▦</span> Calendar</button></div>
           </div>
-          {jobProfiles.slice(0, 3).map((job, index) => (
-            <button className="mini-job" key={job.id} onClick={() => openModule("jobs")}>
-              <span className={`company-tile company-${index + 1}`}>{job.company.slice(0, 2).toUpperCase()}</span>
-              <span><strong>{job.title}</strong><small>{job.company} · {job.city}</small></span>
-              <span className="match-score">{94 - index * 5}%</span>
-            </button>
-          ))}
+          <div className="timeline-scroll" tabIndex={0} aria-label="Scrollable recruitment timeline">
+            <div className="timeline-list">
+              {timelineEvents.map((event, index) => (
+                <article className={index === 0 ? "timeline-item featured" : "timeline-item"} key={event.id}>
+                  <div className="timeline-date"><strong>{event.day}</strong><span>{event.month}</span></div>
+                  <div><h3>{event.title}</h3><p>{event.meta}</p></div>
+                  <span className={`status-pill ${event.statusTone}`}>{event.status}</span>
+                </article>
+              ))}
+            </div>
+          </div>
         </aside>
       </div>
     </div>
   );
 }
 
-function JobProfilesPage() {
-  const [selectedJobId, setSelectedJobId] = useState(jobProfiles[0].id);
+function RecruitmentCalendarPage({ jobProfiles, onBack }: { jobProfiles: JobProfile[]; onBack: () => void }) {
+  const timelineEvents = buildRecruitmentTimeline(jobProfiles);
+  const firstWeekday = new Date(2026, 7, 1).getDay();
+  const calendarDays = Array.from({ length: 42 }, (_, index) => {
+    const day = index - firstWeekday + 1;
+    return day >= 1 && day <= 31 ? day : null;
+  });
+  const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  return (
+    <div className="calendar-page">
+      <section className="calendar-page-heading"><div><span className="eyebrow">Placement schedule</span><h1>Recruitment Calendar</h1><p>Application deadlines, assessments, interviews, and CCD events in one monthly view.</p></div><button className="outline-button" type="button" onClick={onBack}>← Back to home</button></section>
+      <div className="calendar-layout">
+        <section className="month-calendar" aria-labelledby="calendar-month-title">
+          <header><div><span className="section-kicker">Monthly schedule</span><h2 id="calendar-month-title">August 2026</h2></div><span className="calendar-event-count">{timelineEvents.length} scheduled items</span></header>
+          <div className="calendar-weekdays" aria-hidden="true">{weekdays.map((weekday) => <span key={weekday}>{weekday}</span>)}</div>
+          <div className="calendar-grid">
+            {calendarDays.map((day, index) => {
+              const events = day ? timelineEvents.filter((event) => event.day === day) : [];
+              return <div className={day === 9 ? "calendar-day today" : day ? "calendar-day" : "calendar-day outside"} key={`${day ?? "empty"}-${index}`}>{day && <><div className="calendar-day-number"><span>{day}</span>{day === 9 && <small>Today</small>}</div>{events.map((event) => <button className={`calendar-event ${event.statusTone}`} type="button" title={`${event.title} — ${event.meta}`} key={event.id}><strong>{event.title}</strong><small>{event.meta}</small></button>)}</>}</div>;
+            })}
+          </div>
+        </section>
+        <aside className="calendar-agenda"><div><span className="section-kicker">Coming up</span><h2>August agenda</h2></div><div className="calendar-agenda-list">{timelineEvents.map((event) => <article key={event.id}><div className="timeline-date"><strong>{event.day}</strong><span>{event.month}</span></div><div><h3>{event.title}</h3><p>{event.meta}</p><span className={`status-pill ${event.statusTone}`}>{event.status}</span></div></article>)}</div></aside>
+      </div>
+    </div>
+  );
+}
+
+function JobProfilesPage({ jobProfiles, graduationYear }: { jobProfiles: JobProfile[]; graduationYear: number }) {
+  const [selectedJobId, setSelectedJobId] = useState(jobProfiles[0]?.id ?? "");
   const [activeList, setActiveList] = useState<"all" | "applied">("all");
   const [detailTab, setDetailTab] = useState<JobDetailTab>("description");
   const [searchQuery, setSearchQuery] = useState("");
@@ -562,24 +518,30 @@ function JobProfilesPage() {
       || statusFilter === "Open"
       || (statusFilter === "Closing soon" && /tomorrow|2 days|3 days/i.test(job.closes));
     return matchesSearch && matchesSector && matchesType && matchesList && matchesStatus;
-  }), [activeList, appliedJobIds, searchQuery, sectorFilter, statusFilter, typeFilter]);
+  }), [activeList, appliedJobIds, jobProfiles, searchQuery, sectorFilter, statusFilter, typeFilter]);
 
   const selectedJob = jobProfiles.find((job) => job.id === selectedJobId) ?? jobProfiles[0];
-  const hasApplied = appliedJobIds.includes(selectedJob.id);
-  const isNotInterested = notInterestedIds.includes(selectedJob.id);
+  const hasApplied = selectedJob ? appliedJobIds.includes(selectedJob.id) : false;
+  const isNotInterested = selectedJob ? notInterestedIds.includes(selectedJob.id) : false;
   const appliedJobCount = jobProfiles.filter((job) => appliedJobIds.includes(job.id)).length;
   const availableJobCount = jobProfiles.length - appliedJobCount;
 
   function applyToSelectedJob() {
+    if (!selectedJob) return;
     setAppliedJobIds((currentIds) => currentIds.includes(selectedJob.id) ? currentIds : [...currentIds, selectedJob.id]);
     setNotInterestedIds((currentIds) => currentIds.filter((jobId) => jobId !== selectedJob.id));
     setActiveList("applied");
   }
 
   function toggleNotInterested() {
+    if (!selectedJob) return;
     setNotInterestedIds((currentIds) => currentIds.includes(selectedJob.id)
       ? currentIds.filter((jobId) => jobId !== selectedJob.id)
       : [...currentIds, selectedJob.id]);
+  }
+
+  if (!selectedJob) {
+    return <div className="jobs-page"><div className="empty-state"><span>▣</span><strong>No roles for the class of {graduationYear}</strong><p>New placement profiles will appear here after CCD publishes them.</p></div></div>;
   }
 
   return (
@@ -680,12 +642,13 @@ function JobProfilesPage() {
   );
 }
 
-function BasicProfileContent() {
+function BasicProfileContent({ student }: { student: StudentUser }) {
   const [activeTab, setActiveTab] = useState<"about" | "documents">("about");
   const profileFields = [
-    { label: "Full name", value: "Aarav Rajesh Mehta" },
-    { label: "Date of birth", value: "18 September, 2004" },
-    { label: "Gender", value: "Male" },
+    { label: "Full name", value: student.fullName },
+    { label: "Date of birth", value: student.profile?.dateOfBirth ? new Date(`${student.profile.dateOfBirth}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "Not provided" },
+    { label: "Gender", value: student.profile?.gender ?? "Not provided" },
+    { label: "Graduating class", value: String(student.graduationYear), imported: true },
     { label: "Current / latest college", value: "Sardar Patel Institute of Technology, Mumbai", imported: true },
   ];
 
@@ -703,8 +666,8 @@ function BasicProfileContent() {
         <>
           <section className="details-section" aria-label="About the student"><dl className="details-grid">{profileFields.map((field) => <div className="detail-row" key={field.label}><dt>{field.label}</dt><dd>{field.value}{field.imported && <span className="imported-field">⌁ Exam Cell</span>}</dd></div>)}</dl></section>
           <section className="content-block"><div className="section-title-row"><div><span className="section-kicker">Personal statement</span><h3>Profile Summary</h3></div><button className="secondary-button">✎ Edit info</button></div><p className="summary-copy">Computer Engineering student interested in full-stack product development, dependable systems, and solving practical problems through thoughtful software.</p><div className="tag-row"><span>Software Engineering</span><span>Product Development</span><span>Open to opportunities</span></div></section>
-          <section className="content-block"><div className="section-title-row"><div><span className="section-kicker">Contact information</span><h3>Address</h3></div><button className="secondary-button">✎ Edit info</button></div><dl className="details-grid compact"><div className="detail-row"><dt>Permanent address</dt><dd>Andheri East, Mumbai, Maharashtra, India — 400069</dd></div><div className="detail-row"><dt>Current city</dt><dd>Mumbai, Maharashtra</dd></div></dl></section>
-          <section className="content-block"><div className="section-title-row"><div><span className="section-kicker">Reach me at</span><h3>Contact Details</h3></div><button className="secondary-button">✎ Edit info</button></div><dl className="details-grid compact"><div className="detail-row"><dt>Email</dt><dd>aarav.mehta@spit.ac.in</dd></div><div className="detail-row"><dt>Phone</dt><dd>+91 98••• ••241</dd></div></dl></section>
+          <section className="content-block"><div className="section-title-row"><div><span className="section-kicker">Contact information</span><h3>Address</h3></div><button className="secondary-button">✎ Edit info</button></div><dl className="details-grid compact"><div className="detail-row"><dt>Permanent address</dt><dd>{formatAddress(student.profile?.permanentAddress)}</dd></div><div className="detail-row"><dt>Current address</dt><dd>{formatAddress(student.profile?.currentAddress)}</dd></div></dl></section>
+          <section className="content-block"><div className="section-title-row"><div><span className="section-kicker">Reach me at</span><h3>Contact Details</h3></div><button className="secondary-button">✎ Edit info</button></div><dl className="details-grid compact"><div className="detail-row"><dt>College email</dt><dd>{student.email}</dd></div><div className="detail-row"><dt>Personal email</dt><dd>{student.personalEmail}</dd></div><div className="detail-row"><dt>Phone</dt><dd>{student.mobile}</dd></div></dl></section>
         </>
       ) : (
         <section className="documents-panel">
@@ -716,7 +679,12 @@ function BasicProfileContent() {
   );
 }
 
-function AcademicDetailsContent() {
+function formatAddress(address?: AddressDetails | null) {
+  if (!address) return "Not provided";
+  return [address.building, address.street, address.city, address.state, address.pinCode].filter(Boolean).join(", ");
+}
+
+function AcademicDetailsContent({ graduationYear }: { graduationYear: number }) {
   const [showCorrectionForm, setShowCorrectionForm] = useState(false);
   const [requestSubmitted, setRequestSubmitted] = useState(false);
   const semesterRecords = [
@@ -767,8 +735,8 @@ function AcademicDetailsContent() {
           <div><dt>Institute</dt><dd>Sardar Patel Institute of Technology</dd></div>
           <div><dt>Programme</dt><dd>B.Tech · Computer Engineering</dd></div>
           <div><dt>University</dt><dd>University of Mumbai</dd></div>
-          <div><dt>Admission year</dt><dd>2022</dd></div>
-          <div><dt>Expected graduation</dt><dd>2026</dd></div>
+          <div><dt>Admission year</dt><dd>{graduationYear - 4}</dd></div>
+          <div><dt>Expected graduation</dt><dd>{graduationYear}</dd></div>
           <div><dt>Exam seat number</dt><dd>CE22-0187</dd></div>
         </dl>
       </section>
@@ -815,9 +783,9 @@ function AcademicDetailsContent() {
   );
 }
 
-function ProfileSectionContent({ sectionId }: { sectionId: ProfileSectionId }) {
-  if (sectionId === "basic") return <BasicProfileContent />;
-  if (sectionId === "education") return <AcademicDetailsContent />;
+function ProfileSectionContent({ sectionId, student }: { sectionId: ProfileSectionId; student: StudentUser }) {
+  if (sectionId === "basic") return <BasicProfileContent student={student} />;
+  if (sectionId === "education") return <AcademicDetailsContent graduationYear={student.graduationYear} />;
   const model = profileModels[sectionId];
   return (
     <div className="profile-section-view">
@@ -838,8 +806,8 @@ function ProfileSectionContent({ sectionId }: { sectionId: ProfileSectionId }) {
   );
 }
 
-function ProfilePage({ activeSection }: { activeSection: ProfileSectionId }) {
-  return <ProfileSectionContent sectionId={activeSection} />;
+function ProfilePage({ activeSection, student }: { activeSection: ProfileSectionId; student: StudentUser }) {
+  return <ProfileSectionContent sectionId={activeSection} student={student} />;
 }
 
 function ActivityPage({ pageId }: { pageId: "interviews" | "assessments" | "events" | "competitions" }) {
@@ -853,7 +821,7 @@ function ActivityPage({ pageId }: { pageId: "interviews" | "assessments" | "even
   );
 }
 
-function ResumePage() {
+function ResumePage({ student }: { student: StudentUser }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedResumes, setUploadedResumes] = useState<UploadedResume[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -864,7 +832,7 @@ function ResumePage() {
 
     async function loadUploadedResumes() {
       try {
-        const response = await fetch(`${resumeApiBaseUrl}/api/resumes`, { signal: controller.signal });
+        const response = await fetch(`${portalApiBaseUrl}/api/resumes`, { credentials: "include", signal: controller.signal });
         if (!response.ok) return;
         const data = await response.json() as { resumes: UploadedResume[] };
         setUploadedResumes(data.resumes);
@@ -888,7 +856,7 @@ function ResumePage() {
     formData.set("resume", file);
 
     try {
-      const response = await fetch(`${resumeApiBaseUrl}/api/resumes`, { method: "POST", body: formData });
+      const response = await fetch(`${portalApiBaseUrl}/api/resumes`, { method: "POST", body: formData, credentials: "include" });
       const data = await response.json() as { resume?: UploadedResume; message?: string };
       if (!response.ok || !data.resume) throw new Error(data.message ?? "Upload failed.");
       setUploadedResumes((resumes) => [data.resume as UploadedResume, ...resumes]);
@@ -908,8 +876,8 @@ function ResumePage() {
     <div className="resume-page">
       <section className="module-heading"><div><span className="eyebrow">Application documents</span><h1>Resume Repository</h1><p>Maintain role-specific resumes and choose a default version for placement applications.</p></div><div className="resume-upload-controls"><input ref={fileInputRef} className="resume-file-input" type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={uploadResume} /><button className="primary-button" type="button" disabled={isUploading} onClick={() => fileInputRef.current?.click()}>{isUploading ? "Uploading…" : "＋ Upload resume"}</button><small>PDF, DOC or DOCX · maximum 5 MB</small></div></section>
       {uploadMessage && <p className="upload-message" role="status" aria-live="polite">{uploadMessage}</p>}
-      <section className="resume-summary"><div className="resume-preview"><div className="paper-sheet"><span>AM</span><div /><div /><div /><strong>Aarav Mehta</strong><div /><div /></div></div><div><span className="status-pill green">Default resume</span><h2>Software Engineering Resume</h2><p>Optimized for product engineering, backend, and full-stack roles.</p><dl><div><dt>Last updated</dt><dd>7 August 2026</dd></div><div><dt>File size</dt><dd>684 KB · PDF</dd></div><div><dt>Profile match</dt><dd>96%</dd></div></dl><div className="resume-actions"><button className="primary-button">Preview</button><button className="outline-button">Download</button><button className="outline-button">Replace</button></div></div></section>
-      {uploadedResumes.length > 0 && <section className="resume-versions"><div className="activity-list-header"><h2>Uploaded resumes</h2><span className="status-pill blue">{uploadedResumes.length} saved</span></div>{uploadedResumes.map((resume) => <article className="resume-row" key={resume.id}><span className="document-icon">{resume.name.split(".").pop()?.toUpperCase()}</span><div><strong>{resume.name}</strong><p>Uploaded {new Date(resume.uploadedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} · {formatFileSize(resume.size)}</p></div><span className="status-pill green">Uploaded</span><a className="outline-button resume-download" href={`${resumeApiBaseUrl}/api/resumes/${resume.id}/download`}>Download</a></article>)}</section>}
+      <section className="resume-summary"><div className="resume-preview"><div className="paper-sheet"><span>{studentInitials(student.fullName)}</span><div /><div /><div /><strong>{student.fullName}</strong><div /><div /></div></div><div><span className="status-pill green">Default resume</span><h2>Software Engineering Resume</h2><p>Optimized for product engineering, backend, and full-stack roles.</p><dl><div><dt>Last updated</dt><dd>7 August 2026</dd></div><div><dt>File size</dt><dd>684 KB · PDF</dd></div><div><dt>Profile match</dt><dd>96%</dd></div></dl><div className="resume-actions"><button className="primary-button">Preview</button><button className="outline-button">Download</button><button className="outline-button">Replace</button></div></div></section>
+      {uploadedResumes.length > 0 && <section className="resume-versions"><div className="activity-list-header"><h2>Uploaded resumes</h2><span className="status-pill blue">{uploadedResumes.length} saved</span></div>{uploadedResumes.map((resume) => <article className="resume-row" key={resume.id}><span className="document-icon">{resume.name.split(".").pop()?.toUpperCase()}</span><div><strong>{resume.name}</strong><p>Uploaded {new Date(resume.uploadedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} · {formatFileSize(resume.size)}</p></div><span className="status-pill green">Uploaded</span><a className="outline-button resume-download" href={`${portalApiBaseUrl}/api/resumes/${resume.id}/download`}>Download</a></article>)}</section>}
       <section className="resume-versions"><div className="activity-list-header"><h2>Other versions</h2><button className="text-button">Manage versions</button></div>{["Data & Analytics Resume", "Product Engineering Resume", "General Campus Resume"].map((resume, index) => <article className="resume-row" key={resume}><span className="document-icon">PDF</span><div><strong>{resume}</strong><p>Updated {index + 2} weeks ago · {570 + index * 84} KB</p></div><span className="status-pill gray">Ready</span><button className="more-button">•••</button></article>)}</section>
     </div>
   );
@@ -930,9 +898,10 @@ function HelpPage() {
   );
 }
 
-export default function StudentPortal() {
+export default function StudentPortal({ student, jobProfiles, onLogout }: { student: StudentUser; jobProfiles: JobProfile[]; onLogout: () => Promise<void> | void }) {
   const [activeModule, setActiveModule] = useState<ModuleId>("home");
   const [activeProfileSection, setActiveProfileSection] = useState<ProfileSectionId>("basic");
+  const profilePhotoUrl = student.profile?.profilePhoto ? `${portalApiBaseUrl}/api/profile/photo` : null;
 
   function openModule(moduleId: ModuleId) {
     setActiveModule(moduleId);
@@ -946,7 +915,7 @@ export default function StudentPortal() {
     <main className={profileMode ? "app-shell profile-mode" : "app-shell module-mode"}>
       <header className="topbar">
         <div className="topbar-title"><BrandMark onClick={() => openModule("home")} /><span className="brand-copy"><small>CCD · SPIT</small><strong>{moduleTitles[activeModule]}</strong></span></div>
-        <div className="topbar-actions" aria-label="Account actions"><button className="icon-button" aria-label="Settings">⚙</button><button className="icon-button notification-button" aria-label="Notifications">♧<span className="notification-dot" /></button><button className="mini-avatar" aria-label="Open my profile" title="My Profile" onClick={() => openModule("profile")}>AM</button></div>
+        <div className="topbar-actions" aria-label="Account actions"><button className="icon-button" aria-label="Sign out" title="Sign out" onClick={() => void onLogout()}>↪</button><button className="icon-button notification-button" aria-label="Notifications">♧<span className="notification-dot" /></button><button className={profilePhotoUrl ? "mini-avatar profile-photo" : "mini-avatar"} style={profilePhotoUrl ? { backgroundImage: `url(${profilePhotoUrl})` } : undefined} aria-label="Open my profile" title="My Profile" onClick={() => openModule("profile")}>{profilePhotoUrl ? "" : studentInitials(student.fullName)}</button></div>
       </header>
 
       <nav className="primary-nav" aria-label="Primary navigation">
@@ -956,21 +925,22 @@ export default function StudentPortal() {
 
       {profileMode && (
         <aside className="profile-sidebar">
-          <ProfileIdentity />
+          <ProfileIdentity student={student} />
           <label className="mobile-section-picker"><span>Profile section</span><select value={activeProfileSection} onChange={(event) => setActiveProfileSection(event.target.value as ProfileSectionId)}>{profileSections.map((section) => <option value={section.id} key={section.id}>{section.label}</option>)}</select></label>
           <nav className="profile-nav" aria-label="Profile sections">{profileSections.map((section) => <button key={section.id} className={activeProfileSection === section.id ? "profile-nav-item active" : "profile-nav-item"} onClick={() => setActiveProfileSection(section.id)}>{section.label}{section.id === "accomplishments" && <span aria-hidden="true">⌄</span>}</button>)}</nav>
         </aside>
       )}
 
       <section className={profileMode ? "content-panel" : "module-content"}>
-        {activeModule === "home" && <HomeDashboard openModule={openModule} />}
-        {activeModule === "jobs" && <JobProfilesPage />}
-        {activeModule === "profile" && <ProfilePage activeSection={activeProfileSection} />}
+        {activeModule === "home" && <HomeDashboard openModule={openModule} student={student} jobProfiles={jobProfiles} />}
+        {activeModule === "jobs" && <JobProfilesPage jobProfiles={jobProfiles} graduationYear={student.graduationYear} />}
+        {activeModule === "profile" && <ProfilePage activeSection={activeProfileSection} student={student} />}
         {activeModule === "interviews" && <ActivityPage pageId="interviews" />}
         {activeModule === "assessments" && <ActivityPage pageId="assessments" />}
         {activeModule === "events" && <ActivityPage pageId="events" />}
         {activeModule === "competitions" && <ActivityPage pageId="competitions" />}
-        {activeModule === "resume" && <ResumePage />}
+        {activeModule === "resume" && <ResumePage student={student} />}
+        {activeModule === "calendar" && <RecruitmentCalendarPage jobProfiles={jobProfiles} onBack={() => openModule("home")} />}
         {activeModule === "help" && <HelpPage />}
       </section>
     </main>

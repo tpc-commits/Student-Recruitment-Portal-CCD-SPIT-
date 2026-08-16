@@ -4,12 +4,15 @@ This document explains the current student-facing prototype and the safest way t
 
 ## Current Scope
 
-The repository currently contains a responsive, static React model of the student experience for the Student Recruitment Portal.
+The repository contains a responsive React student portal with an Express authentication and resume service.
 
 Implemented student modules:
 
-- Home dashboard
-- Job profiles, search, filters, and job details
+- Home dashboard with a batch notification feed, scrollable recruitment timeline, and linked calendar view
+- Invitation-based registration and login
+- Clickable six-step student onboarding with structured permanent and current address fields
+- Required profile-photo upload with in-app crop and zoom plus a student face-visibility declaration
+- Graduation-year-scoped job profiles, search, filters, and details
 - Applied-job state and eligibility explanation
 - Personal profile and documents
 - Exam Cell–synced academic records
@@ -19,7 +22,7 @@ Implemented student modules:
 - Resume repository
 - Student help centre
 
-The admin application, authentication, Exam Cell integration, notifications, and production recruitment APIs are intentionally not implemented yet. A local Express service now handles resume uploads and should later be connected to authenticated object storage.
+The admin application, Exam Cell integration, invitation email delivery, notifications, and production persistence are not implemented yet. Express currently provides student authentication, server-side batch filtering, and protected resume storage for local development.
 
 ## Data Ownership
 
@@ -57,9 +60,9 @@ Start the development server:
 npm run dev
 ```
 
-This starts the React application on port `3000` and the Express resume API on port `3002`. Uploaded files are stored in the ignored `uploads/resumes/` development directory.
+This starts the React application on port `3000` and Express on port `3002`. Local users are stored under ignored `data/local/`; uploaded files are stored under ignored `uploads/`.
 
-Set `NEXT_PUBLIC_RESUME_API_URL` when the browser-facing API URL differs from `http://localhost:3002`. Set `API_PORT`, `API_HOST`, and `CLIENT_ORIGIN` to configure the Express service.
+Copy `.env.example` to `.env.local` to configure API URLs, the college email domain, and enrollment keys. See `docs/AUTH_AND_ACCESS.md` for contracts and production replacement points.
 
 Create a production build:
 
@@ -85,11 +88,21 @@ npm run lint
 app/
   globals.css              Global CSS entry and Tailwind import
   layout.tsx               Document shell and social metadata
-  page.tsx                 Route entry; renders StudentPortal
+  page.tsx                 Route entry; renders StudentRecruitmentApp
 components/
+  StudentRecruitmentApp.tsx Session restoration and API-backed portal boundary
+  auth/AuthScreen.tsx      Student registration and login screen
+  onboarding/
+    StudentOnboarding.tsx  Required profile setup before portal access
   student-portal/
-    StudentPortal.tsx      Student screens, static data, and UI state
+    StudentPortal.tsx      Authenticated student screens and UI state
+services/
+  portal-api.ts            Typed browser client for Express
+types/
+  portal.ts                Shared frontend data contracts
 styles/
+  auth.css                 Login and registration styles
+  onboarding.css           Student onboarding and responsive stepper styles
   student-portal.css       Student portal layout and responsive styles
   ccd-theme.css            Company colors, logo styling, and brand overrides
 public/
@@ -98,9 +111,11 @@ public/
   og.png                   Social sharing image
 tests/
   rendered-html.test.mjs   Production rendering and required-file checks
-  resume-api.test.mjs      Express upload validation and persistence checks
+  resume-api.test.mjs      Auth, batch filtering, and upload isolation tests
 server/
-  index.js                 Local Express resume upload and download API
+  auth.js                  Account, password, and session service
+  index.js                 Express routes and protected resume API
+  jobs.js                  Temporary admin-owned job data and batch rules
 worker/
   index.ts                 Cloudflare Worker entry
 build/
@@ -111,7 +126,7 @@ build/
 
 ## UI Architecture
 
-`app/page.tsx` is deliberately small. It owns routing only and delegates the student product to `StudentPortal`.
+`app/page.tsx` is deliberately small and delegates to `StudentRecruitmentApp`. That component restores the HTTP-only session, loads batch-scoped jobs, and renders `StudentPortal` only after authentication.
 
 `StudentPortal.tsx` currently keeps temporary UI state in React because this is a static prototype. State resets when the page reloads. Important state examples include:
 
@@ -144,13 +159,13 @@ Do not add these folders until real API work begins; empty architecture adds mai
 
 ## Backend Integration Order
 
-1. Add authentication and a typed current-student session.
-2. Replace static profile and academic data with read APIs.
-3. Add the Exam Cell sync status and correction-request endpoints.
-4. Replace job data with admin-managed job-profile APIs.
+1. Replace local account and session storage with approved infrastructure.
+2. Replace static profile and academic data with Exam Cell read APIs.
+3. Add Exam Cell sync status and correction-request endpoints.
+4. Replace `server/jobs.js` with admin-managed job-profile APIs.
 5. Calculate eligibility on the server and return reason codes.
 6. Add application submission and recruitment-stage tracking.
-7. Add resume upload/storage and document permissions.
+7. Move resumes to private object storage with malware scanning.
 8. Add notifications and audit history.
 
 ## Suggested API Contracts

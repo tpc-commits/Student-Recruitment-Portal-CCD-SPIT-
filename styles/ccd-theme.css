@@ -1,25 +1,41 @@
 :root {
-  --navy: #183b70;
-  --blue: #2e659c;
-  --blue-dark: #183f73;
-  --blue-soft: #e8f0f7;
-  --blue-line: #d5e0eb;
-  --ink: #182638;
-  --muted: #66758a;
-  --surface: #fcfdfe;
-  --canvas: #f2f5f8;
-  --success: #4e7968;
-  --shadow: 0 18px 48px rgba(21, 49, 83, 0.1);
+  --navy: #182848;
+  --blue: #183060;
+  --blue-dark: #182848;
+  --blue-soft: #eaf7fc;
+  --blue-line: #d8e1e8;
+  --ink: #1c2737;
+  --muted: #667383;
+  --surface: #ffffff;
+  --canvas: #f4f6f8;
+  --success: #3e6f5d;
+  --cyan: #0098d8;
+  --cyan-dark: #007eae;
+  --shadow: 0 1px 2px rgba(24, 40, 72, 0.08);
 }
 
 body,
-.app-shell {
+.app-shell,
+.module-content,
+.content-panel {
+  color: var(--ink);
   background: var(--canvas);
 }
 
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid rgba(0, 152, 216, 0.24);
+  outline-offset: 2px;
+}
+
 .topbar {
-  background: rgba(250, 252, 254, 0.96);
-  border-bottom-color: #d8e1ea;
+  background: #ffffff;
+  border-bottom-color: var(--blue-line);
+  backdrop-filter: none;
 }
 
 .topbar-title {
@@ -28,30 +44,21 @@ body,
 }
 
 .brand-mark {
-  position: relative;
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
+  width: 44px;
+  height: 44px;
   overflow: hidden;
   background: #ffffff;
-  border: 1px solid #d7e1eb;
-  border-radius: 12px;
-  box-shadow: 0 7px 18px rgba(23, 57, 100, 0.11);
+  border: 1px solid var(--blue-line);
+  border-radius: 6px;
+  box-shadow: none;
   cursor: pointer;
   transform: none;
-  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
 }
 
 .brand-mark:hover {
-  border-color: #adc3d6;
-  box-shadow: 0 9px 22px rgba(23, 57, 100, 0.16);
-  transform: translateY(-1px);
-}
-
-.brand-mark:focus-visible {
-  outline: 3px solid rgba(46, 101, 156, 0.3);
-  outline-offset: 2px;
+  border-color: var(--cyan);
 }
 
 .brand-mark img {
@@ -67,222 +74,405 @@ body,
 }
 
 .brand-copy small {
-  color: #4d7097;
+  color: var(--cyan-dark);
   font-size: 9px;
   font-weight: 800;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   line-height: 1;
   text-transform: uppercase;
 }
 
 .brand-copy strong {
-  color: #183b70;
-  font-size: 23px;
+  color: var(--navy);
+  font-size: 22px;
   line-height: 1.1;
+}
+
+.icon-button,
+.mini-avatar {
+  border: 1px solid transparent;
+  border-radius: 6px;
 }
 
 .icon-button:hover,
 .mini-avatar:hover {
-  background: #e8eff6;
+  color: var(--navy);
+  background: var(--blue-soft);
+  border-color: #cce9f4;
+  transform: none;
 }
 
 .mini-avatar {
-  background: linear-gradient(145deg, #183b70, #356b9d);
+  background: var(--navy);
 }
 
 .primary-nav {
-  background: #edf2f6;
-  border-right-color: #d8e1ea;
+  background: #ffffff;
+  border-right-color: var(--blue-line);
 }
 
 .nav-item {
-  color: #5e6f84;
+  color: #647182;
+  border-radius: 5px;
 }
 
 .nav-item:hover {
   color: var(--navy);
-  background: rgba(255, 255, 255, 0.74);
+  background: #f1f5f7;
 }
 
 .nav-item.active {
   color: var(--navy);
-  background: #ffffff;
-  box-shadow: 0 8px 22px rgba(21, 49, 83, 0.09);
+  background: var(--blue-soft);
+  box-shadow: none;
 }
 
 .nav-item.active::before {
-  background: var(--blue);
+  width: 3px;
+  background: var(--cyan);
 }
 
 .profile-sidebar {
-  background: #f6f9fb;
-  border-right-color: #dbe4ed;
+  background: #f8fafb;
+  border-right-color: var(--blue-line);
 }
 
 .student-avatar {
-  background: linear-gradient(145deg, #133661 8%, #245987 64%, #4f86b4 155%);
-  border-color: #edf3f8;
-  box-shadow: 0 12px 24px rgba(23, 57, 100, 0.16);
+  background: var(--navy);
+  border-color: #ffffff;
+  box-shadow: 0 0 0 1px var(--blue-line);
 }
 
-.completion-track span {
-  background: linear-gradient(90deg, #24588d, #5688b5);
+.student-avatar.profile-photo,
+.mini-avatar.profile-photo {
+  background-position: center;
+  background-size: cover;
+}
+
+.completion-track span,
+.onboarding-progress span {
+  background: var(--cyan);
+}
+
+.profile-nav-item {
+  border-radius: 4px;
 }
 
 .profile-nav-item.active {
   color: var(--navy);
-  background: #e4edf6;
+  background: #e8f3f8;
 }
 
-.content-panel {
-  background: radial-gradient(circle at 92% 4%, rgba(46, 101, 156, 0.08), transparent 22%), var(--surface);
+.primary-button,
+.onboarding-next,
+.auth-submit,
+.timeline-calendar-button {
+  color: #ffffff;
+  background: var(--navy);
+  border-radius: 5px;
+  box-shadow: none;
 }
 
-.module-content {
-  background: radial-gradient(circle at 90% 2%, rgba(46, 101, 156, 0.08), transparent 24%), var(--canvas);
+.primary-button:hover,
+.onboarding-next:hover,
+.auth-submit:hover,
+.timeline-calendar-button:hover {
+  background: var(--cyan-dark);
 }
 
-.primary-button {
-  background: linear-gradient(135deg, #183b70, #326b9f);
-  box-shadow: 0 8px 20px rgba(24, 59, 112, 0.22);
-}
-
-.primary-button:hover {
-  background: linear-gradient(135deg, #12315e, #285c90);
+.outline-button,
+.secondary-button,
+.onboarding-back,
+.photo-recrop-button {
+  color: var(--navy);
+  background: #ffffff;
+  border-color: #cbd6de;
+  border-radius: 5px;
 }
 
 .welcome-card,
 .help-hero {
-  background:
-    radial-gradient(circle at 88% 12%, rgba(105, 157, 201, 0.34), transparent 28%),
-    linear-gradient(125deg, #102d54, #194977 70%, #2d6793);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 18px;
-  box-shadow: 0 24px 58px rgba(23, 57, 100, 0.18);
+  background: var(--navy);
+  border: 0;
+  border-left: 4px solid var(--cyan);
+  border-radius: 8px;
+  box-shadow: none;
 }
 
 .welcome-card::before,
-.welcome-card::after {
-  border-color: rgba(165, 197, 223, 0.15);
+.welcome-card::after,
+.auth-brand-panel::after {
+  display: none;
+}
+
+.welcome-card h1 {
+  font-size: clamp(29px, 3vw, 40px);
+  font-weight: 700;
+}
+
+.white-button,
+.ghost-light-button {
+  border-radius: 5px;
+  box-shadow: none;
 }
 
 .white-button {
   color: var(--navy);
-  background: #f9fbfd;
+  background: #ffffff;
+}
+
+.ghost-light-button {
+  color: #ffffff;
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.42);
 }
 
 .hero-meter-ring {
-  background: radial-gradient(circle, #173b68 59%, transparent 60%), conic-gradient(#79a6cc 0 68%, rgba(255, 255, 255, 0.17) 68% 100%);
+  background: radial-gradient(circle, var(--navy) 58%, transparent 59%), conic-gradient(var(--cyan) 0 68%, rgba(255, 255, 255, 0.18) 68% 100%);
+  box-shadow: none;
 }
 
-.hero-meter-ring span,
-.help-hero > p {
-  color: #dce9f4;
-}
-
-.metric-card,
 .dashboard-card,
-.profile-card,
-.form-card,
+.notification-post,
+.month-calendar,
+.calendar-agenda,
+.details-section,
+.content-block,
+.profile-entry-card,
+.documents-panel,
+.jobs-workspace,
 .job-card,
 .selected-job,
 .module-stat,
 .module-item,
+.activity-stats article,
+.activity-list,
+.activity-card,
+.resume-summary,
+.resume-versions,
 .faq-list,
-.support-card {
-  background: var(--surface);
-  border-color: #d9e2ec;
-  border-radius: 14px;
+.support-card,
+.form-card {
+  background: #ffffff;
+  border-color: var(--blue-line);
+  border-radius: 7px;
+  box-shadow: var(--shadow);
 }
 
-.metric-icon {
-  color: #24588d;
-  background: #e6eef6;
+.notification-post,
+.timeline-card,
+.month-calendar,
+.calendar-agenda {
+  border-radius: 7px;
+}
+
+.notification-author-avatar,
+.company-logo,
+.company-avatar,
+.job-card-avatar,
+.entry-monogram,
+.activity-icon,
+.exam-cell-icon,
+.qualification-icon,
+.support-icon {
+  color: #ffffff;
+  background: var(--navy);
+}
+
+.notification-count,
+.calendar-event-count,
+.timeline-date,
+.metric-icon,
+.skill-cloud span {
+  color: var(--blue);
+  background: var(--blue-soft);
+  border-color: #cce8f3;
 }
 
 .timeline-item.featured,
 .job-card.selected,
-.selected-job-header {
-  background: #edf3f8;
-  border-color: #d2e0ec;
+.selected-job-header,
+.calendar-day.today {
+  background: #edf7fa;
+  border-color: #bfe3ef;
 }
 
-.timeline-date {
-  color: #245a91;
-  background: #e6eef6;
+.calendar-day.today {
+  box-shadow: inset 0 0 0 2px var(--cyan);
+}
+
+.calendar-event {
+  color: var(--navy);
+  background: #eef7fa;
+  border-left-color: var(--cyan);
 }
 
 .status-pill.blue {
-  color: #234f70;
-  background: #e8eff2;
+  color: #175879;
+  background: #e4f4fa;
 }
 
 .status-pill.green {
-  color: #4b6959;
-  background: #e8f0e9;
+  color: #3d6656;
+  background: #eaf1ed;
 }
 
 .status-pill.amber {
-  color: #8b5a30;
-  background: #f7ead8;
+  color: #7b5a32;
+  background: #f6efe5;
 }
 
-.company-logo,
-.job-card-avatar,
-.entry-monogram,
-.activity-icon {
-  color: #f7fbff;
-  background: linear-gradient(145deg, #183b70, #376fa4);
-}
-
-.company-logo:nth-of-type(3n + 2),
-.job-card:nth-of-type(3n + 2) .job-card-avatar,
-.detail-entry:nth-of-type(3n + 2) .entry-monogram,
-.activity-item:nth-of-type(3n + 2) .activity-icon {
-  background: linear-gradient(145deg, #214b7a, #5385b4);
-}
-
-.company-logo:nth-of-type(3n),
-.job-card:nth-of-type(3n) .job-card-avatar,
-.detail-entry:nth-of-type(3n) .entry-monogram,
-.activity-item:nth-of-type(3n) .activity-icon {
-  background: linear-gradient(145deg, #315d85, #6f95b9);
-}
-
-.blue-alert {
-  color: #315d85;
-  background: #edf3f8;
-  border-color: #d5e2ed;
-}
-
-.exam-cell-icon {
-  color: #ffffff;
-  background: linear-gradient(145deg, #183b70, #376fa4);
-}
-
-.qualification-icon,
-.support-icon {
-  color: #ffffff;
-  background: linear-gradient(145deg, #214b7a, #5385b4);
-}
-
-.skill-cloud span {
-  color: #315d85;
-  background: #eaf1f7;
-  border-color: #d5e2ed;
+.blue-alert,
+.exam-import-notice,
+.photo-declaration {
+  color: #28516a;
+  background: #eef7fa;
+  border-color: #cce6ef;
 }
 
 .help-hero label {
-  color: #65768a;
-  background: #f9fbfd;
-  box-shadow: 0 14px 35px rgba(9, 32, 57, 0.2);
+  color: #657383;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.auth-page {
+  background: var(--canvas);
+}
+
+.auth-brand-panel {
+  background: var(--navy);
+  border-right: 4px solid var(--cyan);
+}
+
+.auth-logo {
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+.auth-eyebrow,
+.onboarding-kicker {
+  color: #36bce9;
+}
+
+.auth-intro h1 {
+  max-width: 480px;
+  font-size: clamp(34px, 3.8vw, 50px);
+  font-weight: 700;
+}
+
+.auth-form-shell {
+  border-color: var(--blue-line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.auth-form-heading h2 {
+  color: var(--navy);
+}
+
+.auth-mode-tabs {
+  gap: 0;
+  padding: 0;
+  background: transparent;
+  border-bottom: 1px solid var(--blue-line);
+  border-radius: 0;
+}
+
+.auth-mode-tabs button {
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+}
+
+.auth-mode-tabs button.active {
+  color: var(--navy);
+  background: transparent;
+  border-bottom-color: var(--cyan);
+  box-shadow: none;
+}
+
+.auth-form input:not([type="checkbox"]),
+.onboarding-form input:not([type=checkbox],[type=file]),
+.onboarding-form select,
+.onboarding-form textarea {
+  background: #ffffff;
+  border-color: #cbd6de;
+  border-radius: 5px;
+}
+
+.auth-form input:focus,
+.onboarding-form input:focus,
+.onboarding-form select:focus,
+.onboarding-form textarea:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 3px rgba(0, 152, 216, 0.12);
+}
+
+.onboarding-page {
+  background: var(--canvas);
+}
+
+.onboarding-header {
+  background: #ffffff;
+  border-bottom-color: var(--blue-line);
+  backdrop-filter: none;
+}
+
+.onboarding-brand img {
+  border-color: var(--blue-line);
+  border-radius: 6px;
+}
+
+.onboarding-brand strong,
+.onboarding-account button,
+.onboarding-heading h2 {
+  color: var(--navy);
+}
+
+.onboarding-stepper {
+  background: var(--navy);
+  border-right: 4px solid var(--cyan);
+}
+
+.onboarding-stepper li.active .onboarding-step-button > span {
+  color: var(--navy);
+  background: var(--cyan);
+  border-color: var(--cyan);
+  box-shadow: none;
+}
+
+.onboarding-stepper li.complete .onboarding-step-button > span {
+  background: #25436a;
+  border-color: #45668e;
+}
+
+.onboarding-content {
+  box-shadow: none;
+}
+
+.address-fieldset,
+.verified-contact-grid div,
+.imported-record-grid,
+.school-records article,
+.photo-upload,
+.photo-crop-editor,
+.photo-rules,
+.document-import-summary,
+.enrollment-summary {
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+.photo-placeholder,
+.exam-import-notice > span {
+  background: var(--navy);
 }
 
 @media (max-width: 900px) {
   .brand-mark {
     width: 40px;
     height: 40px;
-    transform: none;
   }
 
   .brand-copy small {
@@ -291,5 +481,10 @@ body,
 
   .brand-copy strong {
     font-size: 20px;
+  }
+
+  .onboarding-stepper {
+    border-right: 0;
+    border-bottom: 4px solid var(--cyan);
   }
 }
